@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  ms3-api:
+    build: .
+    container_name: ms3_infraestructura_api
+    ports:
+      - "3003:3003"
+    environment:
+      - PORT=3003
+      - MONGO_URI=mongodb://mongo_db:27017/infra_db
+      - MS2_URL=http://localhost:8082
+    depends_on:
+      - mongo_db
+    restart: always
+
+  mongo_db:
+    image: mongo:7
+    container_name: ms3_mongo_db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    restart: always
+
+volumes:
+  mongo_data:
