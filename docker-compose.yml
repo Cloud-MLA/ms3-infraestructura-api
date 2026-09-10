@@ -10,6 +10,10 @@ services:
       - PORT=3003
       - MONGO_URI=mongodb://mongo_db:27017/infra_db
       - MS2_URL=http://localhost:8082
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npx nodemon --legacy-watch src/server.js
     depends_on:
       - mongo_db
     restart: always

@@ -20,13 +20,21 @@ const recursoJsonSchema = {
 
         clase_max: {
             type: "string",
-            enum: ["Banda L", "Banda S", "Banda C", "Banda X"]
+            enum: ['A', 'B', 'C', 'D', 'E', 'F']
         }
     },
     required: ["tipo", "nombre"],
     additionalProperties: false
 };
 
-const validarRecurso = ajv.compile(recursoJsonSchema);
+const recursoPatchSchema = {
+    type: "object",
+    properties: recursoJsonSchema.properties,
+    additionalProperties: false,
+    minProperties: 1
+};
 
-module.exports = { validarRecurso };
+const validarRecurso = ajv.compile(recursoJsonSchema);
+const validarPatchRecurso = ajv.compile(recursoPatchSchema);
+
+module.exports = { validarRecurso, validarPatchRecurso };
