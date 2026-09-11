@@ -1,4 +1,3 @@
-const { error } = require('ajv/dist/vocabularies/applicator/dependencies');
 const Recurso  = require('../models/recurso.model');
 const { validarRecurso, validarPatchRecurso } = require('../schemas/recurso.schema');
 
@@ -34,7 +33,7 @@ const obtenerRecursos = async (req, res) => {
 
         res.status(200).json(recursos);
     } catch (error) {
-        res.status(500).json({ mensaje: "Error al obtener recursos", error: error.mesagge });
+        res.status(500).json({ mensaje: "Error al obtener recursos", error: error.message });
     }
 };
 
@@ -83,11 +82,6 @@ const modificarRecurso = async (req, res) => {
         res.status(500).json({ mensaje: "Error interno del servidor", error: error.message });
     }
 };
-
-const actualizarRecurso = async (req, res) => {
-    
-}
-
 
 module.exports = {
     crearRecurso,

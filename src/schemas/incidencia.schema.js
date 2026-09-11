@@ -19,5 +19,16 @@ const incidenciaJsonSchema = {
     additionalProperties: false
 };
 
+const incidenciaPatchSchema = {
+    type: "object",
+    properties: incidenciaJsonSchema.properties,
+    additionalProperties: false,
+    minProperties: 1
+};
+
+const validarPatchIncidencia = ajv.compile(incidenciaPatchSchema);
 const validarIncidencia = ajv.compile(incidenciaJsonSchema);
-module.exports = { validarIncidencia };
+module.exports = { 
+    validarIncidencia,
+    validarPatchIncidencia
+};
