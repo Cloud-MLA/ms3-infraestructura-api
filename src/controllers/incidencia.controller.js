@@ -23,8 +23,8 @@ const crearIncidencia = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ 
-            mensaje: "error interno del servidor"},
-        )
+            mensaje: "error interno del servidor"
+        })
     }
 };
 
@@ -38,7 +38,7 @@ const obtenerIncidencias = async (req, res) => {
         res.status(500).json({
             mensaje: "error al obtener incidencias",
             error: error.message
-        })
+        });
     }
 };
 
