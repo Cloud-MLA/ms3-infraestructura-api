@@ -1,27 +1,26 @@
 const mongoose = require('mongoose');
 
+const afectaRecursoSchema = new mongoose.Schema({
+    recurso_id: { type: Number, required: true }
+}, { _id: false });
+
+const retrasaVueloSchema = new mongoose.Schema({
+    vuelo_id: { type: Number, required: true }
+}, { _id: false });
+
 const incidenciaSchema = new mongoose.Schema({
-    tipo_incidencia: {
-        type: String,
-        enum: ['Falla_Radar', 'Inundacion', 'Falta_Combustible', 'Saturacion_Vial', 'Manga_Inoperativa', 'Otro'],
-        required: true
-    },
-
-    gravedad: {
-        type: String,
-        enum: ['Leve', 'Moderada', 'Alta', 'Critica'],
-        required: true
-    },
-
-    descripcion: { type: String, required: true},
-    recurso_id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Recurso',
-        required: false
-    },
-    fecha_reporte: { type: Date, default: Date.now}
+    id: { type: Number, required: true, unique: true },
+    gravedad: { type: String, required: true, enum: ["Leve", "Moderada", "Alta", "Critica"] },
+    descripcion: { type: String, required: true },
+    tipo_incidencia: { type: String, required: true, enum: ["Falla_Radar", "Inundacion", "Falta_Combustible", "Saturacion_Vial", "Manga_Inoperativa", "Otro"] },
+    fecha_reporte: { type: Date, required: true },
+    fecha_cierre: { type: Date, default: null }, 
+    afecta_recursos: [afectaRecursoSchema],
+    retrasa_vuelos: [retrasaVueloSchema]
 }, {
-    timestamps: true
+    collection: 'incidencias',
+    timestamps: false,
+    versionKey: false
 });
 
-module.exports = mongoose.model('Inicidencia', incidenciaSchema, 'incidencias');
+module.exports = mongoose.model('Incidencia', incidenciaSchema);

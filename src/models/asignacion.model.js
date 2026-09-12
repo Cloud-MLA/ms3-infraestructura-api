@@ -2,13 +2,12 @@ const mongoose = require('mongoose');
 
 const asignacionSchema = new mongoose.Schema({
     recurso_id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Recurso', //fk hacia coleccion recursos
+        type: Number,
         required: true
     },
 
     vuelo_id_externo: {
-        type: String,
+        type: Number,
         required: true
     },
 
@@ -28,7 +27,9 @@ const asignacionSchema = new mongoose.Schema({
         default: 'Programada'
     }
 }, {
-    timestamps: true
+    collection: 'asignaciones',
+    timestamps: false,
+    versionKey: false
 });
 
-module.exports = mongoose.model('Asignacion', asignacionSchema, 'asignaciones');
+module.exports = mongoose.model('Asignacion', asignacionSchema);

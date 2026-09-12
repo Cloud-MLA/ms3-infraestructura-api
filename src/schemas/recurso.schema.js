@@ -1,40 +1,45 @@
-const Ajv =  require('ajv');
-const addFormats = require('ajv-formats');
-
+const Ajv = require('ajv');
 const ajv = new Ajv({ allErrors: true });
-addFormats(ajv);
 
 const recursoJsonSchema = {
     type: "object",
     properties: {
-        tipo: {
-            type: "string",
-            enum: ["manga", "radar"]
-        },
+        id: { type: "integer" },
+        nombre_tecnico_locacion: { type: "string" },
 
-        nombre: {type: "string", minLength: 3},
-        estado_acople: {
-            type: "string",
-            enum: ["Libre", "Ocupado", "Mantenimiento"]
+        tipo: { 
+            type: "string", 
+            enum: ["manga", "radar"] 
         },
-
-        clase_max: {
-            type: "string",
-            enum: ['A', 'B', 'C', 'D', 'E', 'F']
+        
+        manga: {
+            type: "object",
+            properties: {
+                estado_acople: { 
+                    type: "string", 
+                    enum: ["Libre", "Ocupado", "Mantenimiento", "Inoperativa"] },
+                longitud: { type: "number" },
+                clase_max: { 
+                    type: "string", 
+                    enum: ["A", "B", "C", "D", "E", "F"] }
+            },
+            required: ["estado_acople", "longitud", "clase_max"],
+            additionalProperties: false
+        },
+        radar: {
+            type: "object",
+            properties: {
+                estado_radar: { type: "string" },
+                frecuencia: { 
+                    type: "string", 
+                    enum: ["Banda L", "Banda S", "Banda C", "Banda X"] }
+            },
+            additionalProperties: false
         }
     },
-    required: ["tipo", "nombre"],
+    required: ["id", "nombre_tecnico_locacion", "tipo"],
     additionalProperties: false
 };
 
-const recursoPatchSchema = {
-    type: "object",
-    properties: recursoJsonSchema.properties,
-    additionalProperties: false,
-    minProperties: 1
-};
-
 const validarRecurso = ajv.compile(recursoJsonSchema);
-const validarPatchRecurso = ajv.compile(recursoPatchSchema);
-
-module.exports = { validarRecurso, validarPatchRecurso };
+module.exports = { validarRecurso };

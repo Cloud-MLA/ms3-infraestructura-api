@@ -21,7 +21,10 @@ const crearRecurso = async (req, res) => {
         });
     } catch (error){
         console.error(error);
-        res.status(500).json({ mensaje: "Error interno del servidor"});
+        res.status(500).json({ 
+            mensaje: "Error interno del servidor",
+            errores: error.message
+        });
     }
 };
 
@@ -33,7 +36,10 @@ const obtenerRecursos = async (req, res) => {
 
         res.status(200).json(recursos);
     } catch (error) {
-        res.status(500).json({ mensaje: "Error al obtener recursos", error: error.message });
+        res.status(500).json({ 
+            mensaje: "Error al obtener recursos", 
+            error: error.message 
+        });
     }
 };
 
@@ -45,12 +51,17 @@ const obtenerRecursoPorId = async (req, res) => {
         const recurso = await Recurso.findById(id);
 
         if (!recurso) {
-            return res.status(404).json({ mensaje: "Recurso no encontrado"});
+            return res.status(404).json({ 
+                mensaje: "Recurso no encontrado"
+            });
         }
 
         res.status(200).json(recurso);
     } catch (error) {
-        res.status(500).json({ mensaje: "ID no válido o error de servidor", error: error.message });
+        res.status(500).json({ 
+            mensaje: "ID no válido o error de servidor", 
+            error: error.message 
+        });
     }
 };
 
@@ -63,14 +74,19 @@ const modificarRecurso = async (req, res) => {
         if (!esValido){
             return res.status(400).json({
                 mensaje: "Datos inválidos",
-                error: validarPatchRecurso.errors
+                errores: validarPatchRecurso.errors
             });
         }
 
-        const recurso = await Recurso.findByIdAndUpdate(id, req.body, { new: true, runValidators: true });
+        const recurso = await Recurso.findByIdAndUpdate(
+            id, 
+            req.body, 
+            { new: true, runValidators: true });
 
         if (!recurso){
-            return res.status(404).json({ mensaje: "Recurso no encontrado" });
+            return res.status(404).json({ 
+                mensaje: "Recurso no encontrado" 
+            });
         }
 
         res.status(200).json({
@@ -79,7 +95,10 @@ const modificarRecurso = async (req, res) => {
         });
     } catch (error){
         console.error(error);
-        res.status(500).json({ mensaje: "Error interno del servidor", error: error.message });
+        res.status(500).json({ 
+            mensaje: "Error interno del servidor", 
+            errores: error.message 
+        });
     }
 };
 

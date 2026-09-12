@@ -23,15 +23,32 @@ const crearIncidencia = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ 
-            mensaje: "error interno del servidor"
-        })
+            mensaje: "error interno del servidor",
+            error: error.message
+        });
     }
 };
 
+//get general 
 const obtenerIncidencias = async (req, res) => {
     try {
-        const filtros = req.query;
-        const incidencias = await Incidencia.find(filtros);
+        const { tipo, desde, hasta } = req.query;
+
+        let queryMongo = {};
+
+        if (tipo) {
+            queryMongo.tipo_incidencia = tipo;
+        }
+        if (desde || hasta) {
+            queryMongo.fecha_reporte = {};
+            if (desde) {
+                queryMongo.fecha_reporte.$gte = new Date(desde);
+            }
+            if (hasta) {
+                queryMongo.fecha_reporte.$lte = new Date(hasta);
+            }
+        }
+        const incidencias = await Incidencia.find(queryMongo);
 
         res.status(200).json(incidencias);
     } catch (error) {
@@ -48,9 +65,8 @@ const obtenerIncidenciasPorId = async (req, res) => {
         const incidencia = await Incidencia.findById(id);
 
         if (!incidencia) {
-            return res.status(401).json({
-                mensaje: "Recurso no encontrado",
-                error: error.message
+            return res.status(404).json({
+                mensaje: "Incidencia no encontrada"
             });
         }
 
@@ -63,6 +79,7 @@ const obtenerIncidenciasPorId = async (req, res) => {
     } 
 }
 
+//patch 
 const modificarIncidencia = async (req, res) => {
     try {
         const { id } = req.params;
@@ -71,15 +88,19 @@ const modificarIncidencia = async (req, res) => {
         if (!esValido) {
             return res.status(400).json({
                 mensaje: "Datos inválidos",
-                error: validarPatchIncidencia.errors
+                errores: validarPatchIncidencia.errors
             });
         }
-        const incidencia = await Incidencia.findByIdAndUpdate(id);
+        const incidencia = await Incidencia.findByIdAndUpdate(
+            id,
+            req.body,
+            {new: true, runValidators: true}
+        );
 
         if (!incidencia){
             return res.status(404).json({
                 mensaje: "Incidencia no encontrada"
-            })
+            });
         }
         res.status(200).json({
             mensaje: "Incidencia actualizada exitosamente",

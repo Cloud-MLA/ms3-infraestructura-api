@@ -7,8 +7,8 @@ addFormats(ajv); // Necesario para validar fechas
 const asignacionJsonSchema = {
     type: "object",
     properties: {
-        recurso_id: { type: "string" },
-        vuelo_id_externo: { type: "string" }, // ID que viene del MS2
+        recurso_id: { type: "integer" },
+        vuelo_id_externo: { type: "integer" }, // ID que viene del MS2
         fecha_inicio: { type: "string", format: "date-time" }, // Valida ISO 8601 UTC[cite: 1]
         fecha_fin: { type: "string", format: "date-time" },
         estado_asignacion: {
