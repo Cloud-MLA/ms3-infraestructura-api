@@ -8,7 +8,7 @@ const asignacionJsonSchema = {
     type: "object",
     properties: {
         recurso_id: { type: "integer" },
-        vuelo_id_externo: { type: "integer" }, 
+        vuelo_id: { type: "integer" }, 
         fecha_inicio: { type: "string", format: "date-time" }, 
         fecha_fin: { type: "string", format: "date-time" },
         estado_asignacion: {
@@ -16,7 +16,7 @@ const asignacionJsonSchema = {
             enum: ['Programada', 'En_Curso', 'Finalizada', 'Cancelada']
         }
     },
-    required: ["recurso_id", "vuelo_id_externo", "fecha_inicio"],
+    required: ["recurso_id", "vuelo_id"],
     additionalProperties: false
 };
 

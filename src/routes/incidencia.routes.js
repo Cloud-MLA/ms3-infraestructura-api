@@ -4,7 +4,7 @@ const {
     crearIncidencia,
     obtenerIncidencias,
     obtenerIncidenciasPorId,
-    modificarIncidencia
+    cerrarIncidencia
 } = require('../controllers/incidencia.controller');
 
 router.post('/', crearIncidencia);
@@ -13,6 +13,6 @@ router.get('/', obtenerIncidencias);
 
 router.get('/:id', obtenerIncidenciasPorId);
 
-router.patch('/:id/cierre', modificarIncidencia);
+router.patch('/:id/cierre', cerrarIncidencia);
 
 module.exports = router;

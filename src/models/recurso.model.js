@@ -1,14 +1,17 @@
 const mongoose = require('mongoose');
 
-// Subesquema para manga (sin _id propio)
+// subesquema para manga (sin _id propio)
 const mangaSchema = new mongoose.Schema({
     estado_acople: { type: String, enum: ["Libre", "Ocupado", "Mantenimiento", "Inoperativa"] },
     longitud: { type: Number },
     clase_max: { type: String, enum: ["A", "B", "C", "D", "E", "F"] }
 }, { _id: false }); 
 
-// Subesquema para Radar sin _id propio
+// para radar sin _id propio
+// aliado con el canon del data lake 
+// rango_alcance  + frecuencia |  estado_radar queda opcional.
 const radarSchema = new mongoose.Schema({
+    rango_alcance: { type: Number },
     estado_radar: { type: String },
     frecuencia: { type: String, enum: ["Banda L", "Banda S", "Banda C", "Banda X"] }
 }, { _id: false });

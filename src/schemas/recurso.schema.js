@@ -29,6 +29,7 @@ const recursoJsonSchema = {
         radar: {
             type: "object",
             properties: {
+                rango_alcance: { type: "number" },
                 estado_radar: { type: "string" },
                 frecuencia: { 
                     type: "string", 
@@ -41,5 +42,44 @@ const recursoJsonSchema = {
     additionalProperties: false
 };
 
+const recursoPatchSchema = {
+    type: "object",
+    properties: {
+        estado: {
+            type: "string",
+            enum: ["Libre", "Ocupado", "Mantenimiento", "Inoperativa"]
+        },
+        manga: {
+            type: "object",
+            properties: {
+                estado_acople: {
+                    type: "string",
+                    enum: ["Libre", "Ocupado", "Mantenimiento", "Inoperativa"] },
+                longitud: { type: "number" },
+                clase_max: {
+                    type: "string",
+                    enum: ["A", "B", "C", "D", "E", "F"] }
+            },
+            additionalProperties: false,
+            minProperties: 1
+        },
+        radar: {
+            type: "object",
+            properties: {
+                rango_alcance: { type: "number" },
+                estado_radar: { type: "string" },
+                frecuencia: {
+                    type: "string",
+                    enum: ["Banda L", "Banda S", "Banda C", "Banda X"] }
+            },
+            additionalProperties: false,
+            minProperties: 1
+        }
+    },
+    minProperties: 1,
+    additionalProperties: false
+};
+
 const validarRecurso = ajv.compile(recursoJsonSchema);
-module.exports = { validarRecurso };
+const validarPatchRecurso = ajv.compile(recursoPatchSchema);
+module.exports = { validarRecurso, validarPatchRecurso };

@@ -9,7 +9,9 @@ services:
     environment:
       - PORT=3003
       - MONGO_URI=mongodb://mongo_db:27017/infra_db
-      - MS2_URL=http://localhost:8082
+      - MS2_URL=http://host.docker.internal:8002
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - .:/app
       - /app/node_modules
