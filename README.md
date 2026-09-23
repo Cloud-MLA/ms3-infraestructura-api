@@ -59,7 +59,7 @@ Documento polimórfico: `tipo` discrimina el submódulo `manga` o `radar`.
   "id": 187,
   "nombre_tecnico_locacion": "TORRE - Radar Primario",
   "tipo": "radar",
-  "radar": { "estado_radar": "Operativo", "frecuencia": "Banda S" }
+  "radar": { "rango_alcance": 250, "frecuencia": "Banda S" }
 }
 ```
 
@@ -82,17 +82,19 @@ Documento con arrays `afecta_recursos[]` y `retrasa_vuelos[]` (cada elemento es 
 
 ### `asignaciones`
 
-Representa la relación **Utiliza** (vuelo ↔ recurso). `vuelo_id_externo` es el id proveniente de MS2.
+Representa la relación **Utiliza** (vuelo ↔ recurso). `vuelo_id` es el id proveniente de MS2 (validado por REST).
 
 ```json
 {
   "recurso_id": 12,
-  "vuelo_id_externo": 1841,
+  "vuelo_id": 1841,
   "fecha_inicio": "2026-09-02T08:30:00Z",
   "fecha_fin": "2026-09-02T10:15:00Z",
   "estado_asignacion": "En_Curso"
 }
 ```
+
+`fecha_inicio`, `fecha_fin` y `estado_asignacion` son opcionales (`estado_asignacion` por defecto `Programada`).
 
 ---
 
@@ -110,26 +112,28 @@ Base: **`/api/infra`**. Todos responden JSON.
 ### Recursos (`/api/infra/recursos`)
 | Método | Ruta | Descripción |
 |---|---|---|
-| `GET` | `/api/infra/recursos` | Lista recursos. Filtros opcionales por query: `tipo`, `estado` (`?tipo=manga`) |
-| `GET` | `/api/infra/recursos/:id` | Recurso por `_id` (ObjectId) — `404` si no existe |
+| `GET` | `/api/infra/recursos` | Lista recursos. Filtros opcionales por query: `tipo`, `estado` (`?tipo=manga&estado=Libre`) |
+| `GET` | `/api/infra/recursos/:id` | Recurso por `id` numérico — `404` si no existe |
 | `POST` | `/api/infra/recursos` | Crea recurso (`manga` \| `radar`) — `201`; `400` si falla validación |
-| `PATCH` | `/api/infra/recursos/:id/estado` | Actualiza estado del recurso |
+| `PATCH` | `/api/infra/recursos/:id/estado` | Actualiza estado del recurso (`{"estado": "Libre"})` |
 
 ### Incidencias (`/api/infra/incidencias`)
 | Método | Ruta | Descripción |
 |---|---|---|
 | `GET` | `/api/infra/incidencias` | Lista incidencias. Filtros: `tipo` (enum), `desde` / `hasta` (ISO 8601 sobre `fecha_reporte`) |
-| `GET` | `/api/infra/incidencias/:id` | Incidencia por `_id` — `404` si no existe |
-| `POST` | `/api/infra/incidencias` | Crea incidencia — `201`; `400` si falla validación. *(Pendiente: validación de `retrasa_vuelos[]` contra MS2)* |
-| `PATCH` | `/api/infra/incidencias/:id/cierre` | Cierra la incidencia (setea `fecha_cierre`) |
+| `GET` | `/api/infra/incidencias/:id` | Incidencia por `id` numérico — `404` si no existe |
+| `POST` | `/api/infra/incidencias` | Crea incidencia — `201`; valida `retrasa_vuelos[]` contra MS2 (`422` si el vuelo no existe o está `Cancelado`) |
+| `PATCH` | `/api/infra/incidencias/:id/cierre` | Cierra la incidencia (setea `fecha_cierre`); `409` si ya estaba cerrada |
 
 ### Asignaciones (`/api/infra/asignaciones`)
 | Método | Ruta | Descripción |
 |---|---|---|
-| `GET` | `/api/infra/asignaciones` | Lista asignaciones. Filtros opcionales por query |
-| `POST` | `/api/infra/asignaciones` | Crea asignación. Valida que `recurso_id` exista — `404` si no; *(pendiente: validación de `vuelo_id_externo` contra MS2)* |
+| `GET` | `/api/infra/asignaciones` | Lista asignaciones. Filtros: `?vuelo_id=` / `?recurso_id=` |
+| `POST` | `/api/infra/asignaciones` | Crea asignación. Valida: recurso existe (`404`), recurso `Libre` (`409`), vuelo en MS2 (`422`) y regla de clase `manga.clase_max ≥ aeronave` (`422`) |
 
-Códigos de error: `400` validación (AJV) · `404` recurso no encontrado · `500` error interno.
+Códigos de error (formato único `{ error: { code, message, status, ... } }`, ver `docs/contratos/errores.md`):
+`400 VALIDACION` · `404 NO_ENCONTRADO` · `409 CONFLICTO_ESTADO / RECURSO_OCUPADO / INCIDENCIA_YA_CERRADA` ·
+`422 VUELO_NO_EXISTE / ACOPLE_CLASE_INVALIDO` · `502 DEPENDENCIA_ERROR` · `503 DEPENDENCIA_TIMEOUT` · `500 INTERNO`.
 
 ---
 
@@ -154,9 +158,10 @@ Valores **idénticos** (mismo string, sin tildes) en los 3 microservicios con BD
 ## Reglas de negocio
 
 1. **Un recurso debe ser `manga` o `radar`**, y solo el submódulo correspondiente se valida.
-2. **Clase de aeronave vs. manga:** una aeronave de clase mayor no puede acoplarse a una manga de clase menor (orden `A < B < C < D < E < F`) — validado en la capa de aplicación.
-3. **Referencia suave a MS2:** al crear incidencias o asignaciones que referencien vuelos, el `vuelo_id` debe existir en MS2 (validación REST) — *pendiente de implementar*.
-4. **`id` numérico propio en `recursos` e `incidencias`** (único en su colección) para preservar identidad estable entre el microservicio y la ingesta al data lake.
+2. **Clase de aeronave vs. manga:** una aeronave de clase mayor no puede acoplarse a una manga de clase menor (orden `A < B < C < D < E < F`) — validado en la capa de aplicación (`422 ACOPLE_CLASE_INVALIDO`).
+3. **Referencia suave a MS2:** al crear incidencias o asignaciones que referencien vuelos, el `vuelo_id` debe existir y no estar `Cancelado` en MS2 (validación REST, `422 VUELO_NO_EXISTE`).
+4. **Un recurso `manga` solo se asigna si está `Libre`** (`409 RECURSO_OCUPADO`).
+5. **`id` numérico propio en `recursos` e `incidencias`** (único en su colección) para preservar identidad estable entre el microservicio y la ingesta al data lake.
 
 ---
 
@@ -173,7 +178,7 @@ Copiar `.env.example` a `.env`:
 ```
 PORT=3003
 MONGO_URI=mongodb://localhost:27017/infra_db
-MS2_URL=http://localhost:8082
+MS2_URL=http://localhost:8002
 ```
 
 ### 2. Levantar con Docker Compose

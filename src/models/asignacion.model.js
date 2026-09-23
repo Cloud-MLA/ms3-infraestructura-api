@@ -6,19 +6,21 @@ const asignacionSchema = new mongoose.Schema({
         required: true
     },
 
-    vuelo_id_externo: {
+    vuelo_id: {
         type: Number,
         required: true
     },
 
     fecha_inicio: {
         type: Date,
-        required: true
+        required: false,
+        default: null
     },
     
     fecha_fin: {
         type: Date,
-        required: false
+        required: false,
+        default: null
     },
 
     estado_asignacion: {

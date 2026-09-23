@@ -1,15 +1,17 @@
-const Recurso  = require('../models/recurso.model');
+const Recurso = require('../models/recurso.model');
 const { validarRecurso, validarPatchRecurso } = require('../schemas/recurso.schema');
+const {
+    errorValidacion,
+    errorNoEncontrado,
+    errorRespuesta
+} = require('../utils/errores');
 
-//post
+// POST /recursos
 const crearRecurso = async (req, res) => {
-    try{
+    try {
         const esValido = validarRecurso(req.body);
         if (!esValido) {
-            return res.status(400).json({
-                mensaje: "Datos inválidos. Revisa los enums permitidos",
-                errores: validarRecurso.errors
-            });
+            return errorValidacion(res, validarRecurso.errors);
         }
 
         const nuevoRecurso = new Recurso(req.body);
@@ -19,85 +21,110 @@ const crearRecurso = async (req, res) => {
             mensaje: "recurso creado con éxito",
             datos: nuevoRecurso
         });
-    } catch (error){
+    } catch (error) {
         console.error(error);
-        res.status(500).json({ 
-            mensaje: "Error interno del servidor",
-            errores: error.message
+        errorRespuesta(res, {
+            code: "INTERNO",
+            status: 500,
+            message: "Error interno del servidor"
         });
     }
 };
 
-//get general y con parametros opcionales :v
+// GET /recursos?tipo=&estado=
 const obtenerRecursos = async (req, res) => {
-    try{
-        const filtros = req.query;
-        const recursos = await Recurso.find(filtros);
+    try {
+        const { tipo, estado } = req.query;
 
+        const filtros = {};
+        if (tipo) {
+            filtros.tipo = tipo;
+        }
+        if (estado) {
+            // el estado vive en el submódulo (manga.estado_acople | radar.estado_radar)
+            filtros.$or = [
+                { "manga.estado_acople": estado },
+                { "radar.estado_radar": estado }
+            ];
+        }
+
+        const recursos = await Recurso.find(filtros);
         res.status(200).json(recursos);
     } catch (error) {
-        res.status(500).json({ 
-            mensaje: "Error al obtener recursos", 
-            error: error.message 
+        console.error(error);
+        errorRespuesta(res, {
+            code: "INTERNO",
+            status: 500,
+            message: "Error al obtener recursos"
         });
     }
 };
 
-//get por id
+// GET /recursos/{id} — la PK es el campo numérico `id`, no el _id de Mongo
 const obtenerRecursoPorId = async (req, res) => {
     try {
-        //agarrar el id, buscarlo con el find y devolver el json 
         const { id } = req.params;
-        const recurso = await Recurso.findById(id);
+        const recurso = await Recurso.findOne({ id });
 
         if (!recurso) {
-            return res.status(404).json({ 
-                mensaje: "Recurso no encontrado"
-            });
+            return errorNoEncontrado(res, "recurso");
         }
 
         res.status(200).json(recurso);
     } catch (error) {
-        res.status(500).json({ 
-            mensaje: "ID no válido o error de servidor", 
-            error: error.message 
+        console.error(error);
+        errorRespuesta(res, {
+            code: "INTERNO",
+            status: 500,
+            message: "ID no válido o error de servidor"
         });
     }
 };
 
-//patch recursos
+// PATCH /recursos/{id}/estado
 const modificarRecurso = async (req, res) => {
     try {
         const { id } = req.params;
 
         const esValido = validarPatchRecurso(req.body);
-        if (!esValido){
-            return res.status(400).json({
-                mensaje: "Datos inválidos",
-                errores: validarPatchRecurso.errors
-            });
+        if (!esValido) {
+            return errorValidacion(res, validarPatchRecurso.errors);
         }
 
-        const recurso = await Recurso.findByIdAndUpdate(
-            id, 
-            req.body, 
-            { new: true, runValidators: true });
-
-        if (!recurso){
-            return res.status(404).json({ 
-                mensaje: "Recurso no encontrado" 
-            });
+        const recurso = await Recurso.findOne({ id });
+        if (!recurso) {
+            return errorNoEncontrado(res, "recurso");
         }
+
+        const update = {};
+        if ("estado" in req.body) {
+            // atajo PATCH /recursos/{id}/estado → estado_acople (manga) o estado_radar (radar)
+            if (recurso.tipo === "manga") {
+                update["manga.estado_acople"] = req.body.estado;
+            } else {
+                update["radar.estado_radar"] = req.body.estado;
+            }
+        } else {
+            // update parcial genérico del submódulo (manga|radar) u otros campos
+            Object.assign(update, req.body);
+        }
+
+        const recursoActualizado = await Recurso.findOneAndUpdate(
+            { id },
+            { $set: update },
+            { new: true, runValidators: true }
+        );
 
         res.status(200).json({
             mensaje: "Recurso actualizado exitosamente",
-            datos: recurso
+            datos: recursoActualizado
         });
-    } catch (error){
+    } catch (error) {
         console.error(error);
-        res.status(500).json({ 
-            mensaje: "Error interno del servidor", 
-            errores: error.message 
+        errorRespuesta(res, {
+            code: "INTERNO",
+            status: 500,
+            message: "Error interno del servidor"
         });
     }
 };
